@@ -1,0 +1,9 @@
+streamlit
+pandas
+numpy
+matplotlib
+requests
+dotenv
+plotly
+google-auth
+gspread
