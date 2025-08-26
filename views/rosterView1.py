@@ -11,7 +11,10 @@ def _init_matrix():
     df = pd.DataFrame(False, index=pd.to_datetime(dates), columns=shifts)
     df.index.name = "Date"
     df = df.reset_index()  # bring Date to column 0
-    df.insert(1, "Day", pd.to_datetime(df["Date"]).dt.strftime("%a"))  # now Day is column 1
+    df.insert(1, "Day", pd.to_datetime(df["Date"]).dt.strftime("%a"))  # Day is column 1
+    # Harden dtypes
+    for s in shifts:
+        df[s] = df[s].astype("boolean")  # pandas nullable boolean
     return df
 
 def _sanitize_filename(name: str) -> str:
@@ -46,16 +49,18 @@ def display():
     # --- Week tabs ---
     tabs = st.tabs([f"Week {i+1} • {ws:%d %b}" for i, ws in enumerate(week_starts)])
 
+    # Stage edits per week; don't write back during render
+    staged = {}
+
     for i, ws in enumerate(week_starts):
         we = ws + pd.Timedelta(days=6)
-        # Mask over the canonical matrix in session_state
         mask = (st.session_state.matrix["Date"] >= ws) & (st.session_state.matrix["Date"] <= we)
 
         with tabs[i]:
             st.markdown("**Shortcuts**  \n*Apply to this week. You can still tweak individual days below.*")
-
             c1, c2, c3, c4 = st.columns(4)
-            # Apply presets directly to session_state.matrix (so it sticks on the same click)
+
+            # Apply presets directly to the canonical matrix (single click)
             with c1:
                 if st.button("All mornings", key=f"am_{i}"):
                     st.session_state.matrix.loc[mask, shifts[0]] = True
@@ -69,28 +74,48 @@ def display():
                 if st.button("Clear all", key=f"clr_{i}"):
                     st.session_state.matrix.loc[mask, shifts] = False
 
-            # Pull a fresh view AFTER applying any shortcut
+            # Fresh view AFTER shortcuts
             week_df = st.session_state.matrix.loc[mask].reset_index(drop=True)
             week_df = week_df.loc[:, ["Date", "Day", *shifts]]
 
+            # Ensure checkbox columns are clean booleans and NaN-free each run
+            for s in shifts:
+                week_df[s] = week_df[s].fillna(False).astype("boolean")
 
             editor = st.data_editor(
                 week_df,
                 use_container_width=True,
                 hide_index=True,
+                num_rows="fixed",  # prevents row reflow that can steal the first click
                 column_config={
                     "Date": st.column_config.DateColumn("Date", format="YYYY-MM-DD", disabled=True),
                     "Day": st.column_config.TextColumn("Day", disabled=True),
-                    **{s: st.column_config.CheckboxColumn(s) for s in shifts},
+                    **{s: st.column_config.CheckboxColumn(s, default=False) for s in shifts},
                 },
+                column_order=["Date", "Day", *shifts],
                 key=f"editor_week_{i}",
             )
 
-            # Write editor changes back to the canonical matrix
-            st.session_state.matrix.loc[mask, editor.columns] = editor.values
+            # Defer syncing this week's edits
+            staged[i] = editor.copy()
 
             yes_count = int(editor[shifts].sum().sum())
             st.caption(f"✅ Selected this week: **{yes_count}** shift(s)")
+
+    # ---- One-shot write-back (prevents double-click behavior) ----
+    for i, ws in enumerate(week_starts):
+        editor = staged.get(i)
+        if editor is None:
+            continue
+        we = ws + pd.Timedelta(days=6)
+        mask = (st.session_state.matrix["Date"] >= ws) & (st.session_state.matrix["Date"] <= we)
+        shift_cols = [s for s in shifts if s in editor.columns]
+        # Commit only shift columns as pure booleans
+        st.session_state.matrix.loc[mask, shift_cols] = editor[shift_cols].fillna(False).astype(bool).to_numpy()
+
+    # Keep dtypes stable globally
+    for s in shifts:
+        st.session_state.matrix[s] = st.session_state.matrix[s].fillna(False).astype(bool)
 
     st.divider()
 
@@ -121,12 +146,12 @@ def display():
         st.code(
             f"""Availability — {name} — {start_date:%d %b} to {end_date:%d %b}
 
-Hi Team,
+                Hi Team,
 
-Please find attached my availability for the cycle ({start_date:%d %b}–{end_date:%d %b}).
-Total available shifts selected: {total_yes}.
+                Please find attached my availability for the cycle ({start_date:%d %b}–{end_date:%d %b}).
+                Total available shifts selected: {total_yes}.
 
-Kind regards,
-{name}""",
+                Kind regards,
+                {name}""",
             language="text",
         )
