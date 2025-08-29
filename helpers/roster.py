@@ -16,4 +16,4 @@ end_date = start_date + pd.Timedelta(weeks=4) - pd.Timedelta(days=1)
 dates = pd.date_range(start=start_date, end=end_date, freq='D')
 
 # (Optional) keep your shifts list as-is
-shifts = ["7am - 3pm", "3pm - 11pm", "11pm - 7am"]
+shifts = ["7am-3pm", "3pm-11pm", "11pm-7am"]
