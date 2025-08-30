@@ -22,7 +22,7 @@ def _sanitize_filename(name: str) -> str:
     return safe or "availability"
 
 def display():
-    st.logo("/workspaces/roster/public/excelBM.jpeg", )
+    # st.logo("/public/excelBM.jpeg", )
     st.title("ExcelBM's Roster")
     # st.caption("Excel Building Management")
     st.caption("🗓️ Your new way to Submit Shift Availability")
