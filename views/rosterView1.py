@@ -38,9 +38,9 @@ def display():
     # --- Identity ---
     col_a, col_b = st.columns([2, 1])
     with col_a:
-        name = st.text_input("Your full name", placeholder="e.g., Luis Faria", key="name")
+        name = st.text_input("Your full name", placeholder="e.g., Joe", key="name")
     with col_b:
-        st.text_input("Optional email (for your copy)", placeholder="you@company.com", key="email")
+        st.text_input("Optional email (for your copy)", placeholder="joe@gmail.com", key="email")
     
     if "matrix" not in st.session_state:
         st.session_state.matrix = _init_matrix()
@@ -61,10 +61,10 @@ def display():
         days_selected = int(st.session_state.matrix[shift_cols].any(axis=1).sum())
         coverage_pct = (days_selected / total_days * 100) if total_days else 0
 
-        st.markdown(f"**Total shifts selected:** {total_shifts_selected}  \n"
-                    f"**Days with at least one shift:** {days_selected} / {total_days} ({coverage_pct:.1f}%)")
-        st.progress(coverage_pct / 100 if coverage_pct else 0)
-        st.caption("💡**Tip**"": Double tap the buttons below to see your progress.")
+        # st.markdown(f"**Total shifts selected:** {total_shifts_selected}  \n"
+        #             f"**Days with at least one shift:** {days_selected} / {total_days} ({coverage_pct:.1f}%)")
+        # st.progress(coverage_pct / 100 if coverage_pct else 0)
+        # st.caption("💡**Tip**"": Double tap the buttons below to see your progress.")
 
         # --- Week tabs ---
         tabs = st.tabs([f"**Week {i+1}:** {ws:%d %b}" for i, ws in enumerate(week_starts)])
@@ -83,16 +83,25 @@ def display():
                 with c1:
                     if st.button("All mornings 🌅", key=f"am_{i}"):
                         st.session_state.matrix.loc[mask, shifts[0]] = True
+                        st.success(f"Morning shifts selected for Week {i+1}.")
+
                 with c2:
                     if len(shifts) >= 2 and st.button("All afternoons ☀️", key=f"pm_{i}"):
                         st.session_state.matrix.loc[mask, shifts[1]] = True
+                        st.success(f"Afternoon shifts selected for Week {i+1}.")
                 with c3:
                     if st.button("All evenings 🌙", key=f"ev_{i}") and len(shifts) >= 1:
                         st.session_state.matrix.loc[mask, shifts[-1]] = True
+                        st.success(f"Evening shifts selected for Week {i+1}.")
                 with c4:
                     if st.button("Clear all ⛔", key=f"clr_{i}"):
                         st.session_state.matrix.loc[mask, shifts] = False
+                        st.warning(f"All shifts cleared for Week {i+1}.")
 
+                st.caption("💡**Tip**: Double tap the buttons to update your progress.")
+                st.markdown(f"**Total shifts selected:** {total_shifts_selected}  \n"
+                f"**Days with at least one shift:** {days_selected} / {total_days} ({coverage_pct:.1f}%)")
+                st.progress(coverage_pct / 100 if coverage_pct else 0)
                 # Fresh view AFTER shortcuts
                 week_df = st.session_state.matrix.loc[mask].reset_index(drop=True)
                 week_df = week_df.loc[:, ["Date", "Day", *shifts]]
@@ -120,6 +129,11 @@ def display():
 
                 yes_count = int(editor[shifts].sum().sum())
                 st.caption(f"✅ Selected this week: **{yes_count}** shift(s)")
+
+                # st.markdown(f"**Total shifts selected:** {total_shifts_selected}  \n"
+                # f"**Days with at least one shift:** {days_selected} / {total_days} ({coverage_pct:.1f}%)")
+                # st.progress(coverage_pct / 100 if coverage_pct else 0)
+                # st.caption("💡**Tip**"": Double tap the buttons below to see your progress.")
 
         # ---- One-shot write-back (prevents double-click behavior) ----
         for i, ws in enumerate(week_starts):
