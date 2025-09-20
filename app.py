@@ -7,7 +7,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-from views import rosterView, rosterView1
+from views import rosterViewV1, rosterViewV2, rosterViewV3
 
 # st.title("Concierge Tool")
 # st.markdown("Use the tool below to update your availability process.")
@@ -18,7 +18,7 @@ menu = st.sidebar.radio("📂 Select a screen:", [
 
 # ---- View Routing ----
 if menu == "📅 Roster Availability":
-    rosterView1.display()
+    rosterViewV3.display()
 
 # ---- Footer (Optional) ----
 st.sidebar.markdown("---")
