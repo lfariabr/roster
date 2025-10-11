@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import re
 
-from helpers.roster import start_date, end_date, shifts, dates  # your logic
+from helpers.roster import start_date, end_date, shifts, dates
+from services.emailService import send_email_with_attachment
 
 def _human_period(a, b):
     return f"from: {a:%a %d %b} → to: {b:%a %d %b} ({(b-a).days+1} days)"
@@ -156,28 +157,63 @@ def display():
         long["Available"] = long["Available"].map({True: "YES", False: "NO"})
         long["Date"] = pd.to_datetime(long["Date"]).dt.strftime("%Y-%m-%d")
 
-        st.success("Preview your availability below:")
-        st.dataframe(long, use_container_width=True)
+        with st.expander("See full availability preview (long format)", expanded=False):
+            st.dataframe(long, use_container_width=True)
 
         fname = f"{_sanitize_filename(name)}_{start_date:%Y%m%d}_{end_date:%Y%m%d}.csv"
-        st.download_button(
-            "⬇️ Download CSV",
-            data=long.to_csv(index=False).encode("utf-8"),
-            file_name=fname,
-            mime="text/csv",
-            use_container_width=True,
-        )
 
         total_yes = int((long["Available"] == "YES").sum())
-        st.code(
-            f"""Availability — {name} — {start_date:%d %b} to {end_date:%d %b}
+        
+        subject = f"Availability: {name} ({start_date:%d %b} to {end_date:%d %b})"
+        
+        csv_bytes = long.to_csv(index=False).encode("utf-8")
 
-            Hi Team,
+        # Get optional email for CC
+        cc_email = st.session_state.get("email", "").strip() or None
 
-            Please find attached my availability for the cycle ({start_date:%d %b}–{end_date:%d %b}).
-            Total available shifts selected: {total_yes}.
+        # Build a nice HTML body
+        body_html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; color: #333;">
+            <p>Hi Team,</p>
+            <p>
+            Please find attached my availability for the cycle 
+            <b>{start_date:%d %b}</b> to <b>{end_date:%d %b}</b>.<br>
+            Total available shifts selected: <b>{total_yes}</b>.
+            </p>
+            <p>Kind regards,<br><b>{name}</b></p>
+            <hr>
+            <p style="font-size:12px; color:#999;">
+            <img src="https://raw.githubusercontent.com/lfariabr/roster/main/views/public/excelBM.jpeg" 
+                alt="Excel Building Management" width="160"/><br>
+            Sent automatically from ExcelBM Roster System 🚀
+            </p>
+        </body>
+        </html>
+        """
 
-            Kind regards,
-            {name}""",
-                        language="text",
-                    )
+        # Send the email
+        import time
+
+        # Send the email
+        with st.spinner("📨 Sending your email... please wait a moment"):
+            success = send_email_with_attachment(
+                "excelbmpilot@gmail.com",
+                subject,
+                body_html,
+                csv_bytes,
+                fname,
+                cc_email=cc_email
+            )
+            # Optional: simulate delay for effect during testing
+            # time.sleep(2)
+
+        if success:
+            st.success("✅ Email sent successfully to ExcelBM Roster Inbox!")
+            if cc_email:
+                st.info(f"📨 A copy was also sent to **{cc_email}**.")
+            st.toast("📤 Email sent successfully!", icon="📧")
+        else:
+            st.error("Something went wrong while sending the email. Please try again.")
+
+
