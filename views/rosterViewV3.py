@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import re
 
-from helpers.roster import start_date, end_date, shifts, dates  # your logic
+from helpers.roster import start_date, end_date, shifts, dates
+from services.emailService import send_email_with_attachment
 
 def _human_period(a, b):
     return f"from: {a:%a %d %b} → to: {b:%a %d %b} ({(b-a).days+1} days)"
@@ -181,3 +182,22 @@ def display():
             {name}""",
                         language="text",
                     )
+        
+        subject = f"Availability: {name} ({start_date:%d %b} to {end_date:%d %b})"
+        body = f"""Hi Team,
+
+        Please find attached my availability for the cycle ({start_date:%d %b}–{end_date:%d %b}).
+        Total available shifts selected: {total_yes}.
+
+        Kind regards,
+        {name}
+        """
+
+        csv_bytes = long.to_csv(index=False).encode("utf-8")
+        
+        if send_email_with_attachment("excelbmpilot@gmail.com", subject, body, csv_bytes, fname):
+            st.success("✅ Email sent successfully to ExcelBM Roster Inbox!")
+            st.toast("📤 Email sent successfully!", icon="📧")
+        else:
+            st.error("Something went wrong while sending the email. Please try again.")
+
