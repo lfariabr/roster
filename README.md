@@ -3,12 +3,13 @@
 > **From copy-paste chaos to 2-minute submissions**  
 > *"The best automation isn't flashy — it's invisible.  It just works."*
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success? style=for-the-badge)](https://myroster.streamlit.app/)
-[![Read Article](https://img.shields.io/badge/dev.to-article-0A0A0A?style=for-the-badge&logo=devdotto&logoColor=white)(https://dev.to/lfariaus/myroster-from-copypaste-to-2-minute-submissions-dao)
-[![Python](https://img.shields.io/badge/python-3.10+-blue? style=for-the-badge&logo=python)(https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/streamlit-1.28+-FF4B4B?style=for-the-badge&logo=streamlit)](https://streamlit.io/)
+[![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://myroster.streamlit.app/)
+[![Read Article](https://img.shields.io/badge/dev.to-article-0A0A0A?style=for-the-badge&logo=devdotto&logoColor=white)](https://dev.to/lfariaus/myroster-from-copypaste-to-2-minute-submissions-dao)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue?style=for-the-badge&logo=python)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/streamlit-1.28%2B-FF4B4B?style=for-the-badge&logo=streamlit)](https://streamlit.io/)
 
-A lightweight, interactive web app that transforms shift availability submission from a 15-20 minute chore into a **2-minute task**. Built with Streamlit for Excel Building Management and similar shift-based operations.
+A lightweight, interactive web app that transforms shift availability submission from a 15-20 minute chore into a **2-minute task**. 
+Built with Streamlit for One Company and similar shift-based operations.
 
 **📖 [Read the full story on dev.to](https://dev.to/lfariaus/myroster-from-copypaste-to-2-minute-submissions-dao) →**
 
